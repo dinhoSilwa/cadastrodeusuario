@@ -1,6 +1,6 @@
 
 "use client"
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from '@hookform/resolvers/yup'; // Importa yupResolver do react-hook-form
 import * as yup from "yup";
@@ -9,7 +9,9 @@ import { json } from "stream/consumers";
 //firebase imports
 
 import {databasefirebase} from './firebaseConfig'
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc , getDocs} from "firebase/firestore";
+
+
 
 interface FormData {
   name: string;
@@ -17,7 +19,20 @@ interface FormData {
   selected: string;
 }
 
+
+async function fetchDataUser() {
+  const querySnapshot = await getDocs(collection(databasefirebase, 'UserRegister'));
+  const dataUserRegister: Array<any> = [];
+  querySnapshot.forEach((doc) => {
+    dataUserRegister.push({ id: doc.id, ...doc.data() });
+  });
+
+  return dataUserRegister;
+}
+
+
 const Home = () => {
+  
   const userRegisterSchema = yup.object().shape({
     name: yup
       .string()
@@ -43,7 +58,7 @@ const Home = () => {
   const databaseconnect = async (data : FormData) => {
     try {
       const docRef = await addDoc(
-        collection(databasefirebase, 'menssages'),
+        collection(databasefirebase, 'UserRegister'),
         {
           name: data.name,
           email: data.email,
@@ -73,7 +88,24 @@ const Home = () => {
   };
   
 
+
+
+const [datauser , setdatauser] = useState([]);
+
+useEffect(()=>{
+
+async function fetchData(){
+  const dataUserRegister: any = await fetchDataUser();
+  setdatauser(dataUserRegister);
+  
+}
+fetchData();
+
+},[])
+
+
   return (
+    <>
     <div className="bg-zinc-900 h-screen grid place-content-center">
       <div className="info">{output}</div>
 
@@ -153,6 +185,26 @@ const Home = () => {
         </button>
       </form>
     </div>
+
+    <h2>User Register</h2>
+    <section>
+
+   
+    {
+  datauser.map((user) => (
+    <div key={user.id}>
+      <h2>{user.name}</h2>
+      <h2>{user.email}</h2>
+      <h2>{user.selected}</h2>
+    </div>
+  ))
+}
+
+
+    </section>
+    </>
+
+
   );
 };
 
